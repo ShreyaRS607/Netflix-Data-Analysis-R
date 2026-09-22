@@ -1,0 +1,261 @@
+---
+title: "Netflix Movies and TV Shows Data Analysis"
+author: "Shreya Solanki - 2505101200049   Bsc IT(Hons)   Semester - 3 Division - G"
+date: "15-09-2026"
+output:
+  pdf_document: default
+  html_document:
+    theme: readable
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.width = 8, fig.height = 4.8, fig.align = "center")
+required <- c("dplyr", "ggplot2", "stringr", "tidyr")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing) > 0) stop("Install required packages: ", paste(missing, collapse = ", "))
+library(dplyr); library(ggplot2); library(stringr); library(tidyr); library(knitr)
+```
+
+# Introduction
+
+This tiny project analyses Netflix catalogue data to understand the distribution of Movies and TV Shows, release-year patterns, ratings, countries, and genres. It demonstrates an end-to-end R workflow: data import, cleaning, statistical exploration, plots, interpretation, and a reproducible conclusion.
+
+# Project Definition
+
+The Netflix Movies and TV Shows Data Analysis project is a data analysis project developed using the R programming language. The project explores a Netflix catalogue dataset to understand the distribution of Movies and TV Shows and examine patterns related to release years, ratings, countries, and genres.
+
+The project includes data importing, preprocessing, statistical analysis, data visualization, interpretation of results, and a reproducible conclusion.
+
+# Objectives
+
+The main objectives of this project are:
+
+1. To analyze the Netflix Movies and TV Shows dataset using R.
+2. To identify the distribution of Movies and TV Shows.
+3. To examine release-year patterns.
+4. To analyze the content ratings.
+5. To identify frequently represented production countries.
+6. To identify frequently occurring genres.
+7. To visualize the results using graphs.
+8. To interpret the findings from the analysis.
+
+# Dataset Description
+
+The dataset contains information about Netflix Movies and TV Shows. The main attributes used in this analysis are:
+
+| Attribute | Description |
+|---|---|
+| `show_id` | Unique identifier of the title |
+| `type` | Indicates whether the title is a Movie or TV Show |
+| `title` | Name of the title |
+| `director` | Director of the title |
+| `cast` | Cast information |
+| `country` | Production country or countries |
+| `date_added` | Date the title was added |
+| `release_year` | Original release year |
+| `rating` | Content rating |
+| `duration` | Movie duration or number of seasons |
+| `listed_in` | Genres or categories |
+| `description` | Description of the title |
+
+# Tools and Technologies
+
+- R
+- RStudio
+- R Markdown
+- dplyr
+- ggplot2
+- stringr
+- tidyr
+- knitr
+
+# Data importing
+
+Download a Netflix titles CSV file and save it as `netflix_titles.csv` in the same folder as this `.Rmd` file. This report expects the commonly used columns: `show_id`, `type`, `title`, `director`, `cast`, `country`, `date_added`, `release_year`, `rating`, `duration`, `listed_in`, and `description`.
+
+```{r import}
+netflix <- read.csv("netflix_titles.csv", stringsAsFactors = FALSE, na.strings = c("", "NA"))
+head(netflix)
+```
+
+```{r inspect}
+str(netflix)
+summary(netflix)
+```
+
+# Preprocessing and cleaning
+
+This section standardises text values, converts dates, removes duplicate titles, and removes records with invalid release years. Missing director, cast, country, rating, and duration values are replaced by `Unknown` so they can be counted rather than silently excluded.
+
+```{r cleaning}
+required_columns <- c("show_id", "type", "title", "director", "cast", "country",
+                      "date_added", "release_year", "rating", "duration", "listed_in", "description")
+missing_columns <- setdiff(required_columns, names(netflix))
+if (length(missing_columns) > 0) {
+  stop("The CSV is missing: ", paste(missing_columns, collapse = ", "))
+}
+
+netflix_clean <- netflix %>%
+  mutate(
+    across(where(is.character), ~trimws(.x)),
+    date_added = as.Date(date_added, format = "%B %d, %Y"),
+    year_added = as.integer(format(date_added, "%Y")),
+    release_year = as.integer(release_year),
+    type = factor(type),
+    rating = ifelse(is.na(rating) | rating == "", "Unknown", rating),
+    country = ifelse(is.na(country) | country == "", "Unknown", country),
+    listed_in = ifelse(is.na(listed_in) | listed_in == "", "Unknown", listed_in),
+    director = ifelse(is.na(director) | director == "", "Unknown", director),
+    duration = ifelse(is.na(duration) | duration == "", "Unknown", duration)
+  ) %>%
+  distinct(show_id, .keep_all = TRUE) %>%
+  filter(!is.na(title), title != "", !is.na(release_year), release_year >= 1900, release_year <= 2100)
+
+colSums(is.na(netflix_clean))
+cleaned_preview <- netflix_clean %>%
+  select(show_id, type, title, country, release_year, rating)
+
+kable(
+  head(cleaned_preview),
+  caption = "First six cleaned records"
+)
+```
+
+# Statistical exploration
+
+```{r overview}
+overview <- netflix_clean %>%
+  summarise(
+    Total_titles = n(),
+    Movies = sum(type == "Movie"),
+    TV_Shows = sum(type == "TV Show"),
+    Earliest_release = min(release_year),
+    Latest_release = max(release_year),
+    Unique_ratings = n_distinct(rating),
+    Unique_countries = n_distinct(country)
+  )
+kable(overview, caption = "Netflix catalogue overview")
+```
+
+```{r type-and-rating-tables}
+type_count <- netflix_clean %>% count(type, sort = TRUE)
+rating_count <- netflix_clean %>% count(rating, sort = TRUE) %>% slice_head(n = 10)
+kable(type_count, caption = "Titles by content type")
+kable(rating_count, caption = "Ten most frequent ratings")
+```
+
+# Graphs and plots
+
+```{r type-plot}
+ggplot(netflix_clean, aes(x = type, fill = type)) +
+  geom_bar() +
+  labs(title = "Netflix Titles by Content Type", x = "Content type", y = "Number of titles") +
+  theme_minimal() + theme(legend.position = "none")
+```
+
+```{r release-year-plot}
+release_counts <- netflix_clean %>%
+  count(release_year)
+
+ggplot(release_counts, aes(x = release_year, y = n)) +
+  geom_col() +
+  labs(
+    title = "Number of Titles by Release Year",
+    x = "Release year",
+    y = "Number of titles"
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, max(release_counts$n), by = 1)
+  ) +
+  theme_minimal()
+```
+
+The bar chart shows the distribution of titles by original release year. A lower number of titles in some years may reflect the limited size of the dataset rather than an actual production decline.
+
+```{r top-countries}
+top_countries <- netflix_clean %>%
+  filter(country != "Unknown") %>%
+  mutate(country = str_split(country, ",\\s*")) %>%
+  tidyr::unnest(country) %>%
+  count(country, sort = TRUE) %>%
+  slice_head(n = 10)
+
+kable(
+  top_countries,
+  caption = "Production Countries in the Dataset"
+)
+
+ggplot(top_countries, aes(x = reorder(country, n), y = n)) +
+  geom_col(fill = "firebrick") +
+  coord_flip() +
+  labs(
+    title = "Production Countries in the Dataset",
+    x = "Country",
+    y = "Number of titles"
+  ) +
+  theme_minimal()
+```
+
+```{r top-genres}
+top_genres <- netflix_clean %>%
+  filter(listed_in != "Unknown") %>%
+  mutate(genre = str_split(listed_in, ",\\s*")) %>%
+  tidyr::unnest(genre) %>%
+  count(genre, sort = TRUE) %>%
+  slice_head(n = 10)
+
+kable(top_genres, caption = "Most Frequently Listed Genres")
+
+ggplot(top_genres, aes(x = reorder(genre, n), y = n)) +
+  geom_col(fill = "darkcyan") + coord_flip() +
+  labs(title = "Most Frequently Listed Genres", x = "Genre", y = "Number of titles") +
+  theme_minimal()
+```
+
+```{r rating-plot}
+top_ratings <- netflix_clean %>% count(rating, sort = TRUE) %>% slice_head(n = 10)
+ggplot(top_ratings, aes(x = reorder(rating, n), y = n)) +
+  geom_col(fill = "goldenrod") + coord_flip() +
+  labs(title = "Ten Most Common Content Ratings", x = "Rating", y = "Number of titles") +
+  theme_minimal()
+```
+
+# Key Observations
+
+- The dataset contains 10 titles, including 6 Movies and 4 TV Shows.
+- Movies represent the larger content category in the selected dataset.
+- The release years represented in the dataset range from 2018 to 2024.
+- TV-14 is the most frequently occurring content rating.
+- India is the most frequently represented production country after separating multiple-country entries.
+- Dramas is the most frequently listed genre after separating multiple-genre entries.
+
+# Interpretation of results
+
+- The content-type chart directly answers whether Movies or TV Shows dominate the selected Netflix catalogue.
+- Country and genre fields can contain more than one value per title; this report separates comma-delimited values before counting, so a co-produced title can contribute to multiple countries or genres.
+- The release-year plot describes titles available in the dataset, not Netflix subscriber demand, viewing hours, or revenue.
+- Missing metadata is labelled `Unknown`; therefore, the analysis makes data quality visible instead of treating missing information as a real category.
+
+# Findings
+
+- The overview table reports the total number of titles and the split between Movies and TV Shows.
+- The release-year chart highlights periods with more titles represented in the catalogue.
+- The country and genre charts identify the most frequently represented production locations and categories.
+- Results depend on the date, country, and source of the downloaded Netflix dataset; the catalogue changes over time.
+
+# Conclusion
+
+This project successfully applies data import, preprocessing, descriptive analysis, and data visualisation to a Netflix catalogue dataset. The analysis provides a useful overview of content type, release periods, ratings, production countries, and genres. A future extension could analyse the relationship between content rating and genre, compare Movies with TV Shows by country, or join the data with IMDb/TMDb ratings where permitted.
+
+# Reproducibility checklist
+
+## Reproducibility Checklist
+
+1. Place `netflix_titles.csv` and the `.Rmd` file in the same folder.
+2. Install the required R packages:
+   `rmarkdown`, `knitr`, `dplyr`, `ggplot2`, `stringr`, and `tidyr`.
+3. Open the `.Rmd` file in RStudio.
+4. Select **Knit → Knit to PDF**.
+5. Verify that all tables, graphs, and sections are displayed correctly.
