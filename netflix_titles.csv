@@ -1,0 +1,11 @@
+show_id,type,title,director,cast,country,date_added,release_year,rating,duration,listed_in,description
+s1,Movie,The Silent City,Asha Mehta,Riya Shah,India,"September 9, 2019",2018,TV-14,98 min,"Dramas, International Movies",A fictional drama.
+s2,TV Show,Code Detectives,Rohan Patel,Jay Kumar,"India, United States","January 12, 2020",2019,TV-PG,2 Seasons,"TV Dramas, International TV Shows",A technology mystery series.
+s3,Movie,Ocean Light,Maya Rao,Anika Bose,United States,"March 15, 2021",2020,PG-13,112 min,"Documentaries, International Movies",A documentary about oceans.
+s4,Movie,Midnight Signal,Arjun Shah,Vikram Das,India,"July 1, 2021",2021,TV-MA,105 min,"Thrillers, International Movies",A suspense thriller.
+s5,TV Show,Family Kitchen,Nina Thomas,Leena Roy,United Kingdom,"August 20, 2022",2022,TV-G,1 Season,"Reality TV, International TV Shows",A cooking competition.
+s6,Movie,Future Earth,Sam Lee,Kai Chen,"South Korea, United States","November 11, 2022",2022,TV-14,120 min,"Sci-Fi & Fantasy, Dramas",A science fiction story.
+s7,Movie,Monsoon Notes,Priya Nair,Rahul Sen,India,"February 3, 2023",2023,TV-PG,90 min,"Romantic Movies, Dramas",A romantic drama.
+s8,TV Show,History Uncovered,David Kim,Unknown,Canada,"April 10, 2023",2021,TV-14,3 Seasons,"Docuseries, International TV Shows",A history documentary series.
+s9,Movie,The Last Match,Farah Khan,Imran Ali,India,"June 6, 2024",2024,TV-14,101 min,"Sports Movies, Dramas",A sports story.
+s10,TV Show,Planet Neighbours,Unknown,Unknown,Australia,"December 18, 2024",2024,TV-Y7,1 Season,"Kids' TV, TV Comedies",A family adventure series.
